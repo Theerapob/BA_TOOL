@@ -1,5 +1,5 @@
 CREATE TABLE emPosition_reStructure (
-	PositionID char(36) COLLATE Thai_CI_AS NOT NULL,
+	PositionID int(36) COLLATE Thai_CI_AS NOT NULL,
 	PositionCode nvarchar(50) COLLATE Thai_CI_AS NOT NULL,
 	PositionName nvarchar(255) COLLATE Thai_CI_AS NOT NULL,
 	PositionNameEng nvarchar(255) COLLATE Thai_CI_AS NULL,

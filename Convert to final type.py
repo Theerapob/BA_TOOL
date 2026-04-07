@@ -9,7 +9,7 @@ KNOWN_TYPES = [
     "char", "text", "varchar", "nvarchar",
     "bit", "boolean",
 ]
-
+#แปลง SQL type → raw type, logical type
 def type_mapping(sql_type):
     t = sql_type.lower()
     base = re.split(r"[\(\s]", t)[0]
@@ -48,7 +48,7 @@ def get_final_type(sql_type: str, logical: str) -> str:
     precision = f"({precision_match.group(1)})" if precision_match else ""
 
     mapping = {
-        "timestamp-millis": "datetime2",
+        "timestamp-millis": "datetime",
         "boolean":          "bit",
         "long":             "bigint",
         "int":              "int",
@@ -126,7 +126,7 @@ def extract_columns(sql: str):
             })
             continue
 
-        # ── เพิ่ม final type เข้าไปใน dict ──────────────────────────────
+#ส่วนตารางเเสดงผลลัพธ์
         final = get_final_type(sql_type, logical)
 
         columns.append({
