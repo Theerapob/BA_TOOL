@@ -30,8 +30,14 @@
         <mxCell id="NNPiQ76gWSHUvGrfcUaV-8" parent="1" style="whiteSpace=wrap;html=1;" value="ดึงข้อมูลจากไฟล์ sql มาเเสดงผลเป็นตารางผ่านCLI โดยมีองค์ประกอบดังนี้&lt;div&gt;1.ลำดับ&lt;/div&gt;&lt;div&gt;2.ชื่อของคอลัมข้อมูล&lt;/div&gt;&lt;div&gt;3.ประเภทข้อมูลเเบบ Raw-typeที่เเปลงDatatypeเเล้ว&lt;/div&gt;&lt;div&gt;4.ประเภทข้อมูลเเบบ Logocal-typeที่เเปลงDatatypeแล้ว&lt;/div&gt;&lt;div&gt;5.การ Action ของข้อมูล&amp;nbsp;&lt;/div&gt;&lt;div&gt;6.ข้อมูล final type แบบถูก format แบบพร้อมใช้งาน&lt;/div&gt;" vertex="1">
           <mxGeometry height="170" width="285" x="207.5" y="590" as="geometry" />
         </mxCell>
-        <mxCell id="NNPiQ76gWSHUvGrfcUaV-26" edge="1" parent="1" source="NNPiQ76gWSHUvGrfcUaV-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="NNPiQ76gWSHUvGrfcUaV-25" value="">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="NNPiQ76gWSHUvGrfcUaV-26" edge="1" parent="1" source="NNPiQ76gWSHUvGrfcUaV-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="NNPiQ76gWSHUvGrfcUaV-12" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="1053" />
+              <mxPoint x="420" y="1053" />
+            </Array>
+            <mxPoint x="349.9999999999999" y="960" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="NNPiQ76gWSHUvGrfcUaV-10" parent="1" style="whiteSpace=wrap;html=1;" value="เเสดงผลเป็นตารางข้อมูลที่ผ่านการแปลง Datatypeมาเเบบเรียบร้อยเเล้วในCLI" vertex="1">
           <mxGeometry height="60" width="120" x="290" y="820" as="geometry" />
@@ -65,9 +71,6 @@
         </mxCell>
         <mxCell id="NNPiQ76gWSHUvGrfcUaV-23" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="ผิด" vertex="1">
           <mxGeometry height="30" width="60" x="410" y="330" as="geometry" />
-        </mxCell>
-        <mxCell id="NNPiQ76gWSHUvGrfcUaV-25" parent="1" style="whiteSpace=wrap;html=1;" value="Export เป็นไฟล์ .csv หรือ .xlsx เพื่อนำไปแปลงเป็น final type ที่พร้อมใช้งาน&amp;nbsp;" vertex="1">
-          <mxGeometry height="60" width="120" x="290" y="960" as="geometry" />
         </mxCell>
         <mxCell id="DXP4_KAWF3yG-5iyzCOi-29" edge="1" parent="1" source="DXP4_KAWF3yG-5iyzCOi-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="DXP4_KAWF3yG-5iyzCOi-32" value="">
           <mxGeometry relative="1" as="geometry" />
@@ -126,12 +129,6 @@
         </mxCell>
         <mxCell id="DXP4_KAWF3yG-5iyzCOi-45" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="จบโปรเเกรม" vertex="1">
           <mxGeometry height="80" width="120" x="1240.999951171875" y="999.999951171875" as="geometry" />
-        </mxCell>
-        <mxCell id="DXP4_KAWF3yG-5iyzCOi-46" edge="1" parent="1" source="NNPiQ76gWSHUvGrfcUaV-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="NNPiQ76gWSHUvGrfcUaV-12">
-          <mxGeometry relative="1" as="geometry">
-            <mxPoint x="330" y="1029.9999999999998" as="sourcePoint" />
-            <mxPoint x="340" y="1110" as="targetPoint" />
-          </mxGeometry>
         </mxCell>
         <mxCell id="DXP4_KAWF3yG-5iyzCOi-49" edge="1" parent="1" source="DXP4_KAWF3yG-5iyzCOi-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="DXP4_KAWF3yG-5iyzCOi-45">
           <mxGeometry relative="1" as="geometry" />

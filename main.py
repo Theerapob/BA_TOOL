@@ -130,9 +130,7 @@ def main():
     sql = "\n".join(lines).strip()
     cols, invalid_cols = extract_columns(sql)
 
-    # ──────────────────────────────────────────────
-    # แสดง column ที่ type ไม่ถูกต้อง (ถ้ามี)
-    # ──────────────────────────────────────────────
+# แสดง column ที่ type ไม่ถูกต้อง (ถ้ามี)
     if invalid_cols:
         print("\n⚠️  พบ datatype ที่ไม่รองรับ:\n")
         df_invalid = pd.DataFrame(invalid_cols)
@@ -143,10 +141,8 @@ def main():
     if not cols:
         print("❌ อ่าน SQL ไม่ได้")
         sys.exit(1)
-
-    # ──────────────────────────────────────────────
-    # แสดงผลปกติ
-    # ──────────────────────────────────────────────
+    
+# แสดงผลปกติ
     df = pd.DataFrame(cols)
     print("\n✅ RESULT:\n")
     print(tabulate(df, headers="keys", tablefmt="outline", showindex=False))

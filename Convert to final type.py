@@ -134,7 +134,7 @@ def extract_columns(sql: str):
             "Name":    col_name,
             "Raw":     raw,
             "Logical": logical,
-            "Final":   final,           # ← เพิ่ม
+            "Final":   final,
             "Action":  get_action(logical),
         })
 
