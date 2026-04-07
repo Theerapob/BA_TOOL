@@ -38,7 +38,7 @@ def type_mapping(sql_type):
         return None, None
 
 
-# ── เพิ่ม: แปลง logical type → final type ────────────────────────────────
+#แปลง logical type → final type 
 def get_final_type(sql_type: str, logical: str) -> str:
     t = sql_type.lower()
     base = re.split(r"[\(\s]", t)[0]
@@ -65,7 +65,6 @@ def get_final_type(sql_type: str, logical: str) -> str:
         return "varchar"
 
     return mapping.get(logical, "unknown")
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 def get_action(logical):
