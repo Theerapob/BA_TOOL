@@ -7,8 +7,10 @@ KNOWN_TYPES = [
     "bigint", "int", "decimal", "numeric",
     "date", "time", "datetime", "timestamp",
     "char", "text", "varchar", "nvarchar",
-    "bit", "boolean",
+    "bit", "boolean", "float", "double", "real",
+    "smallint", "tinyint", "money", "smallmoney",
 ]
+
 #แปลง SQL type → raw type, logical type
 def type_mapping(sql_type):
     t = sql_type.lower()
@@ -47,7 +49,7 @@ def get_final_type(sql_type: str, logical: str) -> str:
     precision_match = re.search(r"\(([^)]+)\)", t)
     precision = f"({precision_match.group(1)})" if precision_match else ""
 
-    mapping = {
+    mapping_final_type = {
         "timestamp-millis": "datetime",
         "boolean":          "bit",
         "long":             "bigint",
@@ -57,14 +59,14 @@ def get_final_type(sql_type: str, logical: str) -> str:
         "double":           "float",
         "date":             "date",
         "time-millis":      "time",
-        "string":           "nvarchar",   # default เป็น nvarchar
+        "string":           "nvarchar", 
     }
 
     # varchar ถ้า base type เดิมเป็น varchar หรือ char (ไม่ใช่ unicode)
     if logical == "string" and base in ("varchar", "char"):
         return "varchar"
 
-    return mapping.get(logical, "unknown")
+    return mapping_final_type.get(logical, "unknown")
 
 
 def get_action(logical):
