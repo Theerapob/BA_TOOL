@@ -16,29 +16,48 @@ def type_mapping(sql_type):
     t = sql_type.lower()
     base = re.split(r"[\(\s]", t)[0]
 
-    if "bigint" in base:
+    if base == "bigint":
         return "long", "long"
     elif base in ("int", "integer", "smallint", "tinyint"):
         return "int", "int"
-    elif base in ("decimal", "numeric", "money", "smallmoney"):
+    elif base in ("decimal", "numeric"):
         return "bytes", "decimal"
-    elif base in ("datetime", "timestamp"):
-        return "long", "timestamp-millis"
-    elif base in ("char", "text", "varchar", "nvarchar", "nchar", "json"):
-        return "string", "string"
-    elif base in ("bit", "boolean", "bool"):
+    elif base in ("money", "smallmoney"):
+        return "bytes", "decimal"
+    elif base == "bit":
         return "boolean", "boolean"
-    elif base in ("float",):
+    elif base in ("float", "real"):
         return "float", "float"
-    elif base in ("double", "real"):
+    elif base == "double":
         return "double", "double"
-    elif base in ("date",):
+    elif base in ("datetime", "smalldatetime"):
+        return "long", "timestamp-millis"
+    elif base == "datetime2":
+        return "long", "timestamp-micros" 
+    elif base == "date":
         return "int", "date"
-    elif base in ("time",):
+    elif base == "time":
         return "int", "time-millis"
+    elif base in ("char", "varchar", "text"):
+        return "string", "string"
+    elif base in ("nchar", "nvarchar", "ntext"):
+        return "string", "string"
+    elif base in ("binary", "varbinary", "image"):
+        return "bytes", "bytes"
+    elif base == "rowversion":
+        return "bytes", "bytes"
+    elif base == "timestamp":      
+        return "bytes", "bytes"
+    elif base == "uniqueidentifier":
+        return "string", "uuid"
+    elif base == "xml":
+        return "string", "string"
+    elif base in ("sql_variant",):
+        return "string", "string"           
+    elif base in ("geography", "geometry", "hierarchyid"):
+        return "string", "string"          
     else:
         return None, None
-
 
 #แปลง logical type → final type 
 def get_final_type(sql_type: str, logical: str) -> str:
@@ -47,26 +66,32 @@ def get_final_type(sql_type: str, logical: str) -> str:
 
     # ดึง precision/scale จาก sql_type เดิม เช่น decimal(10,2)
     precision_match = re.search(r"\(([^)]+)\)", t)
-    precision = f"({precision_match.group(1)})" if precision_match else ""
+    precision_scale = precision_match.group(1) if precision_match else "18,2"
 
-    mapping_final_type = {
+    type_mapping = {
+        # Logical types
         "timestamp-millis": "datetime",
+        "timestamp-micros": "datetime2(6)",
+        "date":             "date",
+        "time-millis":      "time",
+        "decimal":          f"decimal({precision_scale})",
+        "uuid":             "uniqueidentifier",
+
+        # Primitive types
         "boolean":          "bit",
         "long":             "bigint",
         "int":              "int",
-        "decimal":          f"decimal{precision}",
         "float":            "float",
-        "double":           "float",
-        "date":             "date",
-        "time-millis":      "time",
-        "string":           "nvarchar", 
+        "double":           "float(53)",
+        "string":           "nvarchar(max)",
+        "bytes":            "varbinary(max)",
     }
 
     # varchar ถ้า base type เดิมเป็น varchar หรือ char (ไม่ใช่ unicode)
     if logical == "string" and base in ("varchar", "char"):
         return "varchar"
 
-    return mapping_final_type.get(logical, "unknown")
+    return type_mapping.get(logical, "unknown")
 
 
 def get_action(logical):
@@ -134,15 +159,15 @@ def extract_columns(sql: str):
         columns.append({
             "NO":      i + 1,
             "Name":    col_name,
-            "Raw":     raw,
-            "Logical": logical,
-            "Final":   final,
+            "RAW TYPE":     raw,
+            "LOGICAL TYPE": logical,
+            "TARGET TYPE":   final,
             "Action":  get_action(logical),
         })
 
     return columns, invalid_columns
 
-
+#ส่วน main function
 def main():
     print("📌 วาง SQL แล้วกด Enter 2 ครั้ง:\n")
 
