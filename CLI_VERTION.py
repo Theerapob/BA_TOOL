@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 from tabulate import tabulate
 
+#ประเภทข้อมูลที่รองรับ
 KNOWN_TYPES = [
     "bigint", "int", "decimal", "numeric",
     "date", "time", "datetime", "timestamp",
@@ -15,7 +16,6 @@ KNOWN_TYPES = [
 def type_mapping(sql_type):
     t = sql_type.lower()
     base = re.split(r"[\(\s]", t)[0]
-
     if base == "bigint":
         return "long", "long"
     elif base in ("int", "integer", "smallint", "tinyint"):
@@ -58,7 +58,7 @@ def type_mapping(sql_type):
         return "string", "string"          
     else:
         return None, None
-
+    
 #แปลง logical type → final type 
 def get_final_type(sql_type: str, logical: str) -> str:
     t = sql_type.lower()
@@ -69,15 +69,13 @@ def get_final_type(sql_type: str, logical: str) -> str:
     precision_scale = precision_match.group(1) if precision_match else "18,2"
 
     type_mapping = {
-        # Logical types
+        # Logical types      final types
         "timestamp-millis": "datetime",
         "timestamp-micros": "datetime2(6)",
         "date":             "date",
         "time-millis":      "time",
         "decimal":          f"decimal({precision_scale})",
         "uuid":             "uniqueidentifier",
-
-        # Primitive types
         "boolean":          "bit",
         "long":             "bigint",
         "int":              "int",
@@ -200,7 +198,7 @@ def main():
 
     df = pd.DataFrame(cols)
     print("\n✅ RESULT:\n")
-    print(tabulate(df, headers="keys", tablefmt="outline", showindex=False))
+    print(tabulate(df, headers="keys", tablefmt="outline", showindex=False)) 
 
 
 if __name__ == "__main__":

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL File Converter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .layout-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* --- Column Layouts --- */
+        .col {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .col-middle {
+            background-color: #262626; /* พื้นหลังสีเข้มตามรูป */
+        }
+
+        /* --- Components --- */
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        /* Upload Box */
+        .upload-section {
+            background-color: #e5e5e5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            background-color: #ffffff;
+            border: 2px dashed #a3a3a3;
+            padding: 40px 20px;
+            text-align: center;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .upload-area.dragover {
+            background-color: #e0f2fe;
+            border-color: #3b82f6;
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            color: #60a5fa;
+            margin-bottom: 10px;
+        }
+
+        .btn-blue {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        .btn-blue:hover {
+            background-color: #2563eb;
+        }
+
+        /* Table Sections */
+        .table-wrapper {
+            background-color: #e5e5e5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .table-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .text-danger {
+            color: #dc2626;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #d4d4d4;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: bold;
+        }
+
+        /* Right Column - Downloads */
+        .download-wrapper {
+            background-color: #e5e5e5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .btn-download {
+            background-color: #a7f3d0;
+            border: 1px solid #34d399;
+            color: #064e3b;
+            width: 100%;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-download:hover {
+            background-color: #6ee7b7;
+        }
+
+        .file-icon {
+            background-color: white;
+            border: 1px solid #10b981;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .divider {
+            text-align: center;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout-container">
+
+    <div class="col">
+        <div class="header-title">
+            <span style="font-size: 30px;">🛢️</span> SQL File Converter
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-area" id="drop-zone">
+                <div class="upload-icon">📄</div>
+                <div>ลากไฟล์ SQL มาวางที่นี่</div>
+                <input type="file" id="file-input" style="display: none;" accept=".sql">
+            </div>
+            <div style="text-align: center;">
+                <button class="btn-blue" onclick="convertFile()">Convert file</button>
+            </div>
+        </div>
+
+        <script>
+            // ใช้ JS สร้างตารางซ้ำๆ เพื่อลดความยาวโค้ด
+            for(let i=0; i<3; i++) {
+                document.write(`
+                    <div class="table-wrapper">
+                        <div class="table-title">📊 list ตารางที่พบ</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>No.</th><th>Name</th><th>Raw</th><th>Logical</th><th>Final</th><th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>1.</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                <tr><td>2.</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                <tr><td>3.</td><td></td><td></td><td></td><td></td><td></td></tr>
+                                <tr><td>4.</td><td></td><td></td><td></td><td></td><td></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `);
+            }
+        </script>
+    </div>
+
+    <div class="col col-middle">
+        <script>
+            for(let i=0; i<3; i++) {
+                document.write(`
+                    <div class="table-wrapper">
+                        <div class="table-title text-danger">⚠️ พบ data type ที่ไม่รองรับ</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>No.</th><th>Name</th><th>SQL type</th><th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>1.</td><td></td><td></td><td></td></tr>
+                                <tr><td>2.</td><td></td><td></td><td></td></tr>
+                                <tr><td>3.</td><td></td><td></td><td></td></tr>
+                                <tr><td>4.</td><td></td><td></td><td></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `);
+            }
+        </script>
+    </div>
+
+    <div class="col">
+        <div class="header-title" style="font-size: 20px;">
+            📄 ดาวน์โหลดไฟล์
+        </div>
+        
+        <div class="download-wrapper">
+            <button class="btn-download" onclick="downloadFile('merged.csv')">
+                <span class="file-icon" style="color: #059669;">CSV</span> ดาวน์โหลดไฟล์ที่รวมเป็นไฟล์เดียวเรียงตารางให้แล้ว .csv
+            </button>
+            <button class="btn-download" onclick="downloadFile('merged.xlsx')">
+                <span class="file-icon" style="color: #047857;">X</span> ดาวน์โหลดไฟล์ที่รวมเป็นไฟล์เดียวเรียงตารางให้แล้ว .xlsx
+            </button>
+
+            <div class="divider">หรือ</div>
+
+            <script>
+                for(let i=1; i<=3; i++) {
+                    document.write(`
+                        <button class="btn-download" onclick="downloadFile('file${i}.csv')">
+                            <span class="file-icon" style="color: #059669;">CSV</span> ดาวน์โหลดไฟล์ของไฟล์ ${i} .csv
+                        </button>
+                        <button class="btn-download" onclick="downloadFile('file${i}.xlsx')">
+                            <span class="file-icon" style="color: #047857;">X</span> ดาวน์โหลดไฟล์ของไฟล์ ${i} .xlsx
+                        </button>
+                    `);
+                }
+            </script>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Drag & Drop Functionality
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            alert(`เตรียมอัปโหลดไฟล์: ${e.dataTransfer.files[0].name}`);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if(e.target.files.length) {
+            alert(`เลือกไฟล์แล้ว: ${e.target.files[0].name}`);
+        }
+    });
+
+    // Mock functions สำหรับปุ่ม
+    function convertFile() {
+        if(fileInput.files.length === 0) {
+            alert("กรุณาเลือกไฟล์ SQL ก่อนทำการ Convert");
+            return;
+        }
+        alert("กำลังประมวลผลไฟล์ SQL...");
+    }
+
+    function downloadFile(filename) {
+        alert(`กำลังเริ่มต้นดาวน์โหลดไฟล์: ${filename}`);
+    }
+</script>
+
+</body>
+</html>

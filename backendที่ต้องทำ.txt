@@ -1,0 +1,19 @@
+project/
+│
+├── main.py                 # FastAPI entrypoint
+├── cli.py                  # CLI version
+│
+├── controllers/
+│   └── convert_controller.py
+│
+├── services/
+│   ├── type_mapper.py
+│   └── sql_parser.py
+│
+├── models/
+│   └── schema.py          # (optional) pydantic model
+│
+├── utils/
+│   └── helpers.py         # (ถ้ามี)
+│
+└── requirements.txt

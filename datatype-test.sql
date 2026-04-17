@@ -27,7 +27,7 @@ CREATE TABLE test_all_datatypes (
     col_binary          binary(16),
     col_varbinary       varbinary(255),
     col_varbinary_max   varbinary(max),
-    col_image           image,
+    col_image           ime,
     col_uniqueidentifier uniqueidentifier,
     col_xml             xml,
     col_sql_variant     sql_variant,
