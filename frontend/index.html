@@ -32,6 +32,12 @@
     <span class="backend-label" id="backendLabel">กำลังเชื่อมต่อ...</span>
   </div>
 
+  <!-- Theme Toggle -->
+  <div class="theme-toggle">
+    <button class="theme-toggle-btn active" id="btnDark"  onclick="setTheme('dark')"  title="Dark mode">🌙</button>
+    <button class="theme-toggle-btn"        id="btnLight" onclick="setTheme('light')" title="Light mode">☀️</button>
+  </div>
+
   <div class="topbar-badge">
     <span class="badge" id="badgeTables">0 tables</span>
     <span class="badge" id="badgeRows">0 rows</span>
@@ -163,14 +169,6 @@
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
             All CSV
-          </button>
-          <button class="btn-dl excel" onclick="downloadAllExcel()">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7,10 12,15 17,10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            All Excel
           </button>
         </div>
       </div>
