@@ -451,19 +451,18 @@ function buildTableCard(k) {
     ? `<div class="backend-cols" id="pills-${k}">${buildPillsHTML(t.backendCols)}</div>`
     : '';
 
-  // Data preview
-  const shownCols   = t.headers.slice(0, 5);
-  const previewRows = t.rows.slice(0, 3);
-  const moreRows    = t.rows.length - 3;
+  // Data preview — ตรงกับข้อมูลที่ export จริง
+  const previewCols = isSql ? MAP_HEADERS : t.headers;
+  const previewSrc  = isSql ? toMappingRows(t.backendCols) : t.rows;
+  const previewRows = previewSrc.slice(0, 10);
+  const moreRows    = previewSrc.length - 10;
 
-  const theadHtml  = shownCols.map(h =>
-    `<th title="${h}">${h.length > 14 ? h.slice(0,14)+'…' : h}</th>`).join('');
-  const tbodyHtml  = previewRows.map(r =>
-    `<tr>${shownCols.map(h => `<td>${String(r[h]??'').slice(0,20)}</td>`).join('')}</tr>`
+  const theadHtml = previewCols.map(h =>
+    `<th title="${h}">${h}</th>`).join('');
+  const tbodyHtml = previewRows.map(r =>
+    `<tr>${previewCols.map(h => `<td>${String(r[h] ?? '')}</td>`).join('')}</tr>`
   ).join('');
-  const noDataHtml = isSql
-    ? `<tr><td colspan="${shownCols.length||1}" class="no-data-cell">Schema only — ไม่มี INSERT data</td></tr>`
-    : `<tr><td colspan="${shownCols.length}" class="no-data-cell">No data</td></tr>`;
+  const noDataHtml = `<tr><td colspan="${previewCols.length || 1}" class="no-data-cell">No data</td></tr>`;
 
   const sessionTag = sessionId
     ? `<span class="session-tag" title="session: ${sessionId}">🔗 mapped</span>` : '';
@@ -493,9 +492,6 @@ function buildTableCard(k) {
     <div class="table-card-actions">
       <button class="btn-card-dl csv"   onclick="downloadTable('${k}','csv')">
         ⬇ ${isSql ? 'Mapping CSV' : 'CSV'}
-      </button>
-      <button class="btn-card-dl excel" onclick="downloadTable('${k}','excel')">
-        ⬇ ${isSql ? 'Mapping Excel' : 'Excel'}
       </button>
     </div>
   </div>`;
@@ -551,45 +547,41 @@ function downloadTable(key, fmt) {
   const t = currentData[key];
   if (!t) return;
 
-  if (t.backendCols) {
-    // SQL → download column mapping (ตรงกับ Postman)
-    const rows = toMappingRows(t.backendCols);
-    if (fmt === 'csv') {
-      const body = [MAP_HEADERS.join(','),
-        ...rows.map(r => MAP_HEADERS.map(h => escCSV(r[h]??'')).join(','))
-      ].join('\n');
-      triggerDownload(new Blob(['\uFEFF'+body],{type:'text/csv;charset=utf-8;'}), key+'_mapping.csv');
-    } else {
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(rows, { header: MAP_HEADERS });
-      ws['!cols'] = [{wch:4},{wch:24},{wch:16},{wch:14},{wch:14},{wch:20},{wch:32}];
-      XLSX.utils.book_append_sheet(wb, ws, 'column_mapping');
-      XLSX.writeFile(wb, key+'_mapping.xlsx');
-    }
-    return;
-  }
+  const headers = t.backendCols ? MAP_HEADERS : t.headers;
+  const rows    = t.backendCols ? toMappingRows(t.backendCols) : t.rows;
+  const name    = t.backendCols ? key + '_mapping' : key;
 
-  // CSV / Excel → data rows
-  if (fmt === 'csv') dlCSV(key, t);
-  else               dlExcel(key, t);
+  if (fmt === 'csv') {
+    const body = [headers.map(escCSV).join(','),
+      ...rows.map(r => headers.map(h => escCSV(r[h] ?? '')).join(','))
+    ].join('\n');
+    triggerDownload(new Blob(['\uFEFF' + body], { type: 'text/csv;charset=utf-8;' }), name + '.csv');
+  } else {
+    const wb = XLSX.utils.book_new();
+    const ws = makeSheet(rows, headers);
+    if (t.backendCols) ws['!cols'] = [{wch:4},{wch:24},{wch:16},{wch:14},{wch:14},{wch:20},{wch:32}];
+    XLSX.utils.book_append_sheet(wb, ws, 'data');
+    XLSX.writeFile(wb, name + '.xlsx');
+  }
 }
 
 function downloadAllCSV() {
   const keys = Object.keys(currentData);
   if (!keys.length) return;
-  const sqlKeys   = keys.filter(k =>  currentData[k].backendCols);
-  const localKeys = keys.filter(k => !currentData[k].backendCols);
 
-  if (localKeys.length) {
-    let out = localKeys.map(k => {
-      const t = currentData[k];
-      return `### ${k}\n` + t.headers.map(escCSV).join(',') + '\n' +
-        t.rows.map(r => t.headers.map(h => escCSV(r[h]??'')).join(',')).join('\n');
-    }).join('\n\n');
-    triggerDownload(new Blob(['\uFEFF'+out],{type:'text/csv;charset=utf-8;'}), 'tables_'+Date.now()+'.csv');
-  }
+  const sections = keys.map(k => {
+    const t       = currentData[k];
+    const headers = t.backendCols ? MAP_HEADERS : t.headers;
+    const rows    = t.backendCols ? toMappingRows(t.backendCols) : t.rows;
+    const head    = headers.map(escCSV).join(',');
+    const body    = rows.map(r => headers.map(h => escCSV(r[h] ?? '')).join(',')).join('\n');
+    return `### ${k}\n${head}\n${body}`;
+  });
 
-  sqlKeys.forEach(k => downloadTable(k, 'csv'));
+  triggerDownload(
+    new Blob(['\uFEFF' + sections.join('\n\n')], { type: 'text/csv;charset=utf-8;' }),
+    'all_tables_' + Date.now() + '.csv'
+  );
   showStatus('convertStatus', 'success', '✓ ดาวน์โหลด CSV สำเร็จ');
 }
 
@@ -599,31 +591,35 @@ function downloadAllExcel() {
   const wb = XLSX.utils.book_new();
 
   keys.forEach(k => {
-    const t = currentData[k];
-    if (t.backendCols) {
-      const ws = XLSX.utils.json_to_sheet(toMappingRows(t.backendCols), { header: MAP_HEADERS });
-      ws['!cols'] = [{wch:4},{wch:24},{wch:16},{wch:14},{wch:14},{wch:20},{wch:32}];
-      XLSX.utils.book_append_sheet(wb, ws, k.substring(0,31));
-    } else {
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(t.rows), k.substring(0,31));
-    }
+    const t       = currentData[k];
+    const headers = t.backendCols ? MAP_HEADERS : t.headers;
+    const rows    = t.backendCols ? toMappingRows(t.backendCols) : t.rows;
+    const ws      = makeSheet(rows, headers);
+    if (t.backendCols) ws['!cols'] = [{wch:4},{wch:24},{wch:16},{wch:14},{wch:14},{wch:20},{wch:32}];
+    XLSX.utils.book_append_sheet(wb, ws, k.substring(0, 31));
   });
 
-  XLSX.writeFile(wb, 'all_tables_'+Date.now()+'.xlsx');
+  XLSX.writeFile(wb, 'all_tables_' + Date.now() + '.xlsx');
   showStatus('convertStatus', 'success', '✓ ดาวน์โหลด Excel สำเร็จ');
+}
+
+// สร้าง worksheet รองรับทั้ง rows มีข้อมูลและ rows ว่าง
+function makeSheet(rows, headers) {
+  if (rows.length) return XLSX.utils.json_to_sheet(rows, { header: headers });
+  return XLSX.utils.aoa_to_sheet([headers]);  // headers-only เมื่อไม่มีข้อมูล
 }
 
 function dlCSV(name, table) {
   const body = [table.headers.map(escCSV).join(','),
-    ...table.rows.map(r => table.headers.map(h => escCSV(r[h]??'')).join(','))
+    ...table.rows.map(r => table.headers.map(h => escCSV(r[h] ?? '')).join(','))
   ].join('\n');
-  triggerDownload(new Blob(['\uFEFF'+body],{type:'text/csv;charset=utf-8;'}), name+'.csv');
+  triggerDownload(new Blob(['\uFEFF' + body], { type: 'text/csv;charset=utf-8;' }), name + '.csv');
 }
 
 function dlExcel(name, table) {
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(table.rows), name.substring(0,31));
-  XLSX.writeFile(wb, name+'.xlsx');
+  XLSX.utils.book_append_sheet(wb, makeSheet(table.rows, table.headers), name.substring(0, 31));
+  XLSX.writeFile(wb, name + '.xlsx');
 }
 
 function escCSV(v) {
@@ -708,8 +704,17 @@ function setBackendStatus(ok) {
   lbl.textContent = ok ? 'API Online' : 'API Offline';
 }
 
+// ─── Theme Toggle ─────────────────────────────────────────
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  document.getElementById('btnDark').classList.toggle('active',  theme === 'dark');
+  document.getElementById('btnLight').classList.toggle('active', theme === 'light');
+}
+
 // ── Init ──────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
+  setTheme(localStorage.getItem('theme') || 'dark');
   checkHealth();
   setInterval(checkHealth, 30_000);
 });
