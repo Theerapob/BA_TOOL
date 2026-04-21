@@ -16,6 +16,24 @@
   --sans: 'DM Sans', sans-serif;
   --radius: 10px;
   --radius-sm: 6px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.35);
+}
+
+[data-theme="light"] {
+  --bg: #f0f2f8;
+  --surface: #ffffff;
+  --surface2: #f4f6fb;
+  --border: #dde1ef;
+  --border2: #c4cade;
+  --accent: #00b87a;
+  --accent2: #0078e0;
+  --accent-dim: rgba(0, 184, 122, 0.1);
+  --danger: #e8334a;
+  --warn: #d4850a;
+  --text: #141926;
+  --text2: #4d5878;
+  --text3: #9aa3be;
+  --shadow: 0 2px 12px rgba(0,0,0,0.10);
 }
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -26,6 +44,35 @@ body {
   color: var(--text);
   min-height: 100vh;
   padding: 0;
+  transition: background-color 0.3s ease, color 0.2s ease;
+}
+
+/* ─── THEME TOGGLE ─── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn {
+  width: 28px; height: 28px;
+  border-radius: 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: all 0.25s ease;
+  color: var(--text3);
+}
+
+.theme-toggle-btn.active {
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 
 /* ─── TOP BAR ─── */
@@ -40,6 +87,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: var(--shadow);
+  transition: background-color 0.3s ease;
 }
 
 .logo-chip {
@@ -668,7 +717,7 @@ input[type="file"] { display: none; }
 }
 
 /* ─── DATA PREVIEW ─── */
-.preview-wrap { overflow-x: auto; border-bottom: 1px solid var(--border); }
+.preview-wrap { overflow-x: auto; overflow-y: auto; max-height: 280px; border-bottom: 1px solid var(--border); }
 
 .preview-table {
   width: 100%;
@@ -685,6 +734,9 @@ input[type="file"] { display: none; }
   font-weight: 600;
   white-space: nowrap;
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .preview-table tbody td {
