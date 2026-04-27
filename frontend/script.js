@@ -37,6 +37,17 @@ async function handleFiles(files) {
     return;
   }
 
+  // ── ตรวจ duplicate ก่อนทำอะไรทั้งนั้น ─────────────────
+  const dupIssues = await detectDuplicates(supported);
+  if (dupIssues.length > 0) {
+    const decision = await showDuplicateModal(dupIssues, supported);
+    if (decision === 'cancel') {
+      showStatus('uploadStatus', 'error', '⚠️ ยกเลิกการอัปโหลด — กรุณาเลือกไฟล์ใหม่');
+      return;
+    }
+    // proceed → ดำเนินการต่อแม้จะมี duplicate
+  }
+
   // Reset
   currentData   = {};
   uploadedFiles = [];
@@ -148,14 +159,18 @@ async function sendSQLToBackend(sqlFiles) {
     sessionId = data.session_id;
 
     // ใส่ backend mapping result เข้า currentData
-    applyBackendTables(data.tables, data.unknown || {});
+    applyBackendTables(data.tables, data.unknown || {}, data.byte_anomalies || {});
 
     const unknownCount = Object.values(data.unknown || {}).flat().length;
+    const anomalyCount = Object.values(data.byte_anomalies || {}).flat().length;
+
     if (unknownCount > 0) renderUnknownWarnings(data.unknown);
+    if (anomalyCount > 0) renderByteAnomalyWarnings(data.byte_anomalies);
 
     showStatus('uploadStatus', 'success',
       `✓ Backend mapping สำเร็จ — ${Object.keys(data.tables).length} table` +
-      (unknownCount ? ` (⚠️ ${unknownCount} unknown type)` : '')
+      (unknownCount ? ` (⚠️ ${unknownCount} unknown type)` : '') +
+      (anomalyCount ? ` (🔴 ${anomalyCount} byte anomaly)` : '')
     );
 
   } catch (err) {
@@ -167,10 +182,11 @@ async function sendSQLToBackend(sqlFiles) {
 }
 
 // ── นำ backend result มาใส่ currentData ──────────────────
-function applyBackendTables(tables, unknown) {
+function applyBackendTables(tables, unknown, byteAnomalies = {}) {
   Object.entries(tables).forEach(([tableName, cols]) => {
     const fileName    = cols[0]?.file || 'unknown.sql';
     const unknownCols = (unknown[tableName] || []).map(u => u.column_name);
+    const anomalyCols = (byteAnomalies[tableName] || []).map(a => a.column_name);
 
     currentData[tableName] = {
       headers    : cols.map(c => c.column_name),
@@ -179,7 +195,8 @@ function applyBackendTables(tables, unknown) {
       fileType   : 'sql',
       backendCols: cols.map(c => ({
         ...c,
-        isUnknown: unknownCols.includes(c.column_name)
+        isUnknown    : unknownCols.includes(c.column_name),
+        isByteAnomaly: anomalyCols.includes(c.column_name),
       }))
     };
   });
@@ -303,7 +320,9 @@ async function fetchResult() {
     const res = await fetch(`${API_BASE}/result/${sessionId}`);
     if (!res.ok) throw new Error((await res.json().catch(()=>({}))).detail || res.statusText);
     const data = await res.json();
-    applyBackendTables(data.tables, data.unknown || {});
+    applyBackendTables(data.tables, data.unknown || {}, data.byte_anomalies || {});
+    if (Object.values(data.byte_anomalies || {}).flat().length > 0)
+      renderByteAnomalyWarnings(data.byte_anomalies);
     renderTypePanel();
     renderTables();
     showStatus('convertStatus', 'success', '✓ Refresh result สำเร็จ');
@@ -526,11 +545,21 @@ function buildTableCard(k) {
 function buildPillsHTML(backendCols) {
   const show = backendCols.slice(0, 6);
   const more = backendCols.length - 6;
-  return show.map(c => `
-    <span class="bcol-pill${c.isUnknown ? ' unknown' : ''}" title="source: ${c.source_sql_type||''}">
+  return show.map(c => {
+    const cls = c.isByteAnomaly ? ' byte-anomaly'
+              : c.isUnknown     ? ' unknown'
+              : '';
+    const tooltip = c.isByteAnomaly
+      ? `⚠️ byte anomaly: source=${c.source_sql_type}`
+      : `source: ${c.source_sql_type||''}`;
+    const badge = c.isByteAnomaly ? '<span class="anomaly-pill-badge">⚠️byte</span>' : '';
+    return `
+    <span class="bcol-pill${cls}" title="${tooltip}">
       ${c.column_name}<em>${c.final_type || c.logical_type || '?'}</em>
+      ${badge}
       <span class="nullable-badge ${c.nullable === 'NOT NULL' ? 'not-null' : 'null'}">${c.nullable || 'NULL'}</span>
-    </span>`).join('') +
+    </span>`;
+  }).join('') +
     (more > 0 ? `<span class="bcol-more">+${more} more</span>` : '');
 }
 
@@ -548,6 +577,37 @@ function renderUnknownWarnings(unknown) {
     <div class="warn-panel-header">
       ⚠️ Unknown Types (${items.length})
       <button onclick="this.parentElement.parentElement.remove()">✕</button>
+    </div>
+    <ul>${items.join('')}</ul>`;
+  document.getElementById('tablesGrid').insertAdjacentElement('beforebegin', div);
+}
+
+// ── Byte anomaly warnings ─────────────────────────────────
+function renderByteAnomalyWarnings(byteAnomalies) {
+  document.getElementById('byteAnomalyWarnings')?.remove();
+  const items = Object.entries(byteAnomalies).flatMap(([tbl, cols]) =>
+    cols.map(c => `
+      <li>
+        <div class="anomaly-row">
+          <span class="anomaly-loc"><b>${tbl}</b>.<code>${c.column_name}</code></span>
+          <span class="anomaly-tag">source: <em>${c.source_type}</em> → raw: <em>${c.raw_type}</em></span>
+        </div>
+        <div class="anomaly-detail">${c.detail}</div>
+        <div class="anomaly-file">📄 ${c.file}</div>
+      </li>`)
+  );
+  if (!items.length) return;
+
+  const div = document.createElement('div');
+  div.id        = 'byteAnomalyWarnings';
+  div.className = 'warn-panel byte-anomaly-panel';
+  div.innerHTML = `
+    <div class="warn-panel-header byte-anomaly-header">
+      <span>🔴 ตรวจพบข้อมูลไม่ปกติ — Byte Conversion Anomaly (${items.length} คอลัมน์)</span>
+      <div class="anomaly-actions">
+        <span class="anomaly-hint">คอลัมน์เหล่านี้ถูกแปลงเป็น byte แต่ type ต้นทางไม่ใช่ decimal — กรุณาตรวจสอบ mapping</span>
+        <button onclick="this.closest('#byteAnomalyWarnings').remove()">✕</button>
+      </div>
     </div>
     <ul>${items.join('')}</ul>`;
   document.getElementById('tablesGrid').insertAdjacentElement('beforebegin', div);
@@ -868,6 +928,143 @@ document.addEventListener('keydown', e => {
 // ═══════════════════════════════════════════════════════════
 //  UI HELPERS
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  DUPLICATE DETECTION
+// ═══════════════════════════════════════════════════════════
+
+// คำนวณ hash แบบเร็ว (FNV-1a 32-bit) สำหรับเปรียบเทียบเนื้อหา
+function _fnv32(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(16);
+}
+
+// อ่านไฟล์เป็น text (สำหรับ SQL และ CSV)
+function _readAsText(file) {
+  return new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result || '');
+    r.onerror = () => resolve('');
+    r.readAsText(file, 'utf-8');
+  });
+}
+
+// ตรวจ duplicate ก่อน process — คืน array ของ issues ที่พบ
+async function detectDuplicates(files) {
+  const issues   = [];
+  const nameSet  = new Map();   // name → index
+  const hashSet  = new Map();   // hash → filename
+  const tableSet = new Map();   // tableName → filename (SQL only)
+
+  for (const file of files) {
+    const nameLower = file.name.toLowerCase();
+
+    // 1. ชื่อไฟล์ซ้ำ
+    if (nameSet.has(nameLower)) {
+      issues.push({
+        type  : 'filename',
+        label : '📄 ชื่อไฟล์ซ้ำ',
+        detail: `"${file.name}" ซ้ำกับไฟล์ที่อัปโหลด`,
+        files : [nameSet.get(nameLower), file.name],
+      });
+    } else {
+      nameSet.set(nameLower, file.name);
+    }
+
+    // 2. เนื้อหาไฟล์ซ้ำ (hash) — ตรวจเฉพาะ SQL และ CSV
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'sql' || ext === 'csv') {
+      const text = await _readAsText(file);
+      const hash = _fnv32(text.replace(/\s+/g, ' ').trim());  // normalize whitespace
+      if (hashSet.has(hash)) {
+        issues.push({
+          type  : 'content',
+          label : '🔁 เนื้อหาเหมือนกัน',
+          detail: `"${file.name}" มีเนื้อหาเหมือนกับ "${hashSet.get(hash)}" ทุกประการ`,
+          files : [hashSet.get(hash), file.name],
+        });
+      } else {
+        hashSet.set(hash, file.name);
+      }
+
+      // 3. Table name ซ้ำข้ามไฟล์ SQL
+      if (ext === 'sql') {
+        const tableMatches = [...text.matchAll(
+          /create\s+table\s+(?:if\s+not\s+exists\s+)?([a-zA-Z0-9_."`\[\]]+)\s*\(/gi
+        )];
+        for (const m of tableMatches) {
+          const tname = m[1].replace(/["`\[\]]/g, '').split('.').pop().toLowerCase();
+          if (tableSet.has(tname)) {
+            issues.push({
+              type  : 'table',
+              label : '🗃️ Table ซ้ำข้ามไฟล์',
+              detail: `Table "${tname}" พบทั้งใน "${tableSet.get(tname)}" และ "${file.name}"`,
+              files : [tableSet.get(tname), file.name],
+            });
+          } else {
+            tableSet.set(tname, file.name);
+          }
+        }
+      }
+    }
+  }
+
+  return issues;
+}
+
+// แสดง modal ให้ผู้ใช้ verify — คืน Promise<'proceed'|'cancel'>
+function showDuplicateModal(issues, files) {
+  return new Promise(resolve => {
+    document.getElementById('dupModalOverlay')?.remove();
+
+    const rows = issues.map(iss => `
+      <tr>
+        <td><span class="dup-type-badge">${iss.label}</span></td>
+        <td class="dup-detail">${iss.detail}</td>
+      </tr>`).join('');
+
+    const overlay = document.createElement('div');
+    overlay.id        = 'dupModalOverlay';
+    overlay.className = 'dup-modal-overlay';
+    overlay.innerHTML = `
+      <div class="dup-modal">
+        <div class="dup-modal-icon">⚠️</div>
+        <div class="dup-modal-title">พบข้อมูลที่อาจซ้ำกัน — กรุณา Verify ก่อนดำเนินการ</div>
+        <div class="dup-modal-sub">
+          ตรวจพบ <strong>${issues.length}</strong> รายการที่ต้องระวัง
+          จากไฟล์ที่อัปโหลดทั้งหมด <strong>${files.length}</strong> ไฟล์
+        </div>
+        <table class="dup-table">
+          <thead><tr><th>ประเภท</th><th>รายละเอียด</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="dup-modal-hint">
+          หากแน่ใจว่าต้องการดำเนินการต่อ คลิก <b>ดำเนินการต่อ</b>
+          หรือ <b>ยกเลิก</b> เพื่อเลือกไฟล์ใหม่
+        </div>
+        <div class="dup-modal-actions">
+          <button class="dup-btn-cancel"   id="dupBtnCancel">✕ ยกเลิก</button>
+          <button class="dup-btn-proceed"  id="dupBtnProceed">✓ ดำเนินการต่อ</button>
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('dupBtnProceed').onclick = () => {
+      overlay.remove();
+      resolve('proceed');
+    };
+    document.getElementById('dupBtnCancel').onclick = () => {
+      overlay.remove();
+      resolve('cancel');
+    };
+  });
+}
+
+
 function renderFileChip(name, type) {
   const div = document.createElement('div');
   div.className = 'file-item';
@@ -890,6 +1087,7 @@ function clearUI() {
   const card = document.getElementById('sessionCard');
   if (card) card.style.display = 'none';
   document.getElementById('unknownWarnings')?.remove();
+  document.getElementById('byteAnomalyWarnings')?.remove();
   updateStats(0,0,0);
   updateBadges(0,0,'ready');
 }
