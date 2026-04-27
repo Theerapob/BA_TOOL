@@ -1300,3 +1300,295 @@ input:focus-visible {
 .loading-bar {
   will-change: transform;
 }
+/* ═══════════════════════════════════════════════════════
+   BYTE ANOMALY — Warning Panel & Pill Styles
+   ═══════════════════════════════════════════════════════ */
+
+/* Panel หลัก */
+.byte-anomaly-panel {
+  background: rgba(255, 77, 109, 0.07);
+  border: 1.5px solid rgba(255, 77, 109, 0.4);
+  animation: fadeUp 0.25s ease;
+}
+
+/* Header ของ anomaly panel */
+.byte-anomaly-header {
+  color: var(--danger) !important;
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 6px;
+}
+
+.anomaly-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.anomaly-hint {
+  font-size: 0.78em;
+  font-weight: 400;
+  color: var(--text2);
+  font-style: italic;
+  flex: 1;
+}
+
+.anomaly-actions button {
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 1em;
+  flex-shrink: 0;
+}
+
+/* แต่ละ item ใน list */
+.byte-anomaly-panel li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 77, 109, 0.05);
+  border: 1px solid rgba(255, 77, 109, 0.15);
+  font-family: var(--mono);
+  font-size: 0.76em;
+}
+
+.anomaly-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.anomaly-loc {
+  color: var(--text);
+}
+
+.anomaly-loc b {
+  color: var(--danger);
+}
+
+.anomaly-loc code {
+  background: rgba(255,77,109,0.12);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--danger);
+}
+
+.anomaly-tag {
+  font-size: 0.9em;
+  color: var(--text3);
+}
+
+.anomaly-tag em {
+  font-style: normal;
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.anomaly-detail {
+  color: var(--text2);
+  font-size: 0.88em;
+  line-height: 1.4;
+  padding-left: 2px;
+}
+
+.anomaly-file {
+  color: var(--text3);
+  font-size: 0.82em;
+  padding-left: 2px;
+}
+
+/* Pill highlight สำหรับ byte anomaly */
+.bcol-pill.byte-anomaly {
+  border-color: rgba(255, 77, 109, 0.6);
+  background: rgba(255, 77, 109, 0.1);
+  color: var(--danger);
+  animation: pulse-danger 2s ease-in-out infinite;
+}
+
+.bcol-pill.byte-anomaly em {
+  color: var(--danger);
+}
+
+.anomaly-pill-badge {
+  font-size: 0.75em;
+  background: rgba(255, 77, 109, 0.2);
+  color: var(--danger);
+  border: 1px solid rgba(255, 77, 109, 0.4);
+  padding: 0px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,109,0); }
+  50%       { box-shadow: 0 0 0 3px rgba(255,77,109,0.2); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   DUPLICATE VERIFY MODAL
+   ═══════════════════════════════════════════════════════ */
+
+.dup-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.18s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.dup-modal {
+  background: var(--surface);
+  border: 1.5px solid rgba(245, 166, 35, 0.5);
+  border-radius: 14px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  padding: 32px 28px 24px;
+  max-width: 560px;
+  width: calc(100vw - 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: slideUp 0.22s cubic-bezier(0.22,1,0.36,1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(18px); opacity: 0 }
+  to   { transform: translateY(0);    opacity: 1 }
+}
+
+.dup-modal-icon {
+  font-size: 2.2em;
+  text-align: center;
+  line-height: 1;
+}
+
+.dup-modal-title {
+  font-size: 0.98em;
+  font-weight: 700;
+  color: var(--warn);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.dup-modal-sub {
+  font-size: 0.8em;
+  color: var(--text2);
+  text-align: center;
+}
+
+.dup-modal-sub strong {
+  color: var(--text);
+}
+
+/* ตาราง issues */
+.dup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78em;
+  font-family: var(--mono);
+}
+
+.dup-table thead th {
+  background: var(--surface2);
+  color: var(--text2);
+  font-weight: 600;
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.dup-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.dup-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.dup-table td {
+  padding: 8px 10px;
+  vertical-align: top;
+}
+
+.dup-type-badge {
+  display: inline-block;
+  background: rgba(245,166,35,0.12);
+  color: var(--warn);
+  border: 1px solid rgba(245,166,35,0.35);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 0.88em;
+  white-space: nowrap;
+}
+
+.dup-detail {
+  color: var(--text2);
+  line-height: 1.5;
+}
+
+.dup-modal-hint {
+  font-size: 0.76em;
+  color: var(--text3);
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  line-height: 1.5;
+}
+
+.dup-modal-hint b {
+  color: var(--text);
+}
+
+/* ปุ่ม */
+.dup-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.dup-btn-cancel,
+.dup-btn-proceed {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.84em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.dup-btn-cancel {
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1px solid var(--border2);
+}
+
+.dup-btn-cancel:hover {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+
+.dup-btn-proceed {
+  background: rgba(245,166,35,0.15);
+  color: var(--warn);
+  border: 1px solid rgba(245,166,35,0.4);
+}
+
+.dup-btn-proceed:hover {
+  background: var(--warn);
+  color: #000;
+}
