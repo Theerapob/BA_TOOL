@@ -163,14 +163,17 @@ async function sendSQLToBackend(sqlFiles) {
 
     const unknownCount = Object.values(data.unknown || {}).flat().length;
     const anomalyCount = Object.values(data.byte_anomalies || {}).flat().length;
+    const contentDups  = data.content_dup_warnings || [];
 
     if (unknownCount > 0) renderUnknownWarnings(data.unknown);
     if (anomalyCount > 0) renderByteAnomalyWarnings(data.byte_anomalies);
+    if (contentDups.length > 0) renderContentDupWarnings(contentDups);
 
     showStatus('uploadStatus', 'success',
       `✓ Backend mapping สำเร็จ — ${Object.keys(data.tables).length} table` +
       (unknownCount ? ` (⚠️ ${unknownCount} unknown type)` : '') +
-      (anomalyCount ? ` (🔴 ${anomalyCount} byte anomaly)` : '')
+      (anomalyCount ? ` (🔴 ${anomalyCount} byte anomaly)` : '') +
+      (contentDups.length ? ` (🔁 ${contentDups.length} content ซ้ำ)` : '')
     );
 
   } catch (err) {
@@ -608,6 +611,29 @@ function renderByteAnomalyWarnings(byteAnomalies) {
         <span class="anomaly-hint">คอลัมน์เหล่านี้ถูกแปลงเป็น byte แต่ type ต้นทางไม่ใช่ decimal — กรุณาตรวจสอบ mapping</span>
         <button onclick="this.closest('#byteAnomalyWarnings').remove()">✕</button>
       </div>
+    </div>
+    <ul>${items.join('')}</ul>`;
+  document.getElementById('tablesGrid').insertAdjacentElement('beforebegin', div);
+}
+
+// ── Content duplicate warnings ───────────────────────────
+function renderContentDupWarnings(warnings) {
+  document.getElementById('contentDupWarnings')?.remove();
+  const items = warnings.map(w => `
+    <li>
+      <div class="anomaly-row">
+        <span class="anomaly-loc"><b>${w.file}</b></span>
+        <span class="anomaly-tag">🔁 เหมือนกับ <em>${w.duplicate_of}</em></span>
+      </div>
+      <div class="anomaly-detail">${w.msg}</div>
+    </li>`);
+  const div = document.createElement('div');
+  div.id        = 'contentDupWarnings';
+  div.className = 'warn-panel';
+  div.innerHTML = `
+    <div class="warn-panel-header">
+      🔁 พบไฟล์ที่มีเนื้อหาซ้ำกัน (${warnings.length} ไฟล์) — แยก table ให้อัตโนมัติแล้ว
+      <button onclick="this.parentElement.parentElement.remove()">✕</button>
     </div>
     <ul>${items.join('')}</ul>`;
   document.getElementById('tablesGrid').insertAdjacentElement('beforebegin', div);
